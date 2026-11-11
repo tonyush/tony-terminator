@@ -67,11 +67,12 @@ a[data-testid="stPageLink-NavLink"] {
 a[data-testid="stPageLink-NavLink"] p { font-weight:700; letter-spacing:.06em; color:var(--muted); }
 a[data-testid="stPageLink-NavLink"]:hover { border-color: var(--gold); background: var(--panel-2); }
 a[data-testid="stPageLink-NavLink"]:hover p { color: var(--text); }
-a[data-testid="stPageLink-NavLink"][aria-current="page"] {
+.st-key-nav-active a[data-testid="stPageLink-NavLink"],
+.st-key-nav-active a[data-testid="stPageLink-NavLink"]:hover {
   background: linear-gradient(135deg,#F5B942,#E08A1E); border-color: transparent;
   box-shadow: 0 6px 18px rgba(245,185,66,.25);
 }
-a[data-testid="stPageLink-NavLink"][aria-current="page"] p { color:#1A1203; }
+.st-key-nav-active a[data-testid="stPageLink-NavLink"] p { color:#1A1203 !important; }
 .nav-divider { height:1px; background: var(--line); margin: .9rem 0 1.2rem; }
 
 /* Cards (Google Form style) */
@@ -137,11 +138,13 @@ def render_header() -> None:
     )
 
 
-def render_nav(pages: Sequence[Any]) -> None:
+def render_nav(pages: Sequence[Any], active: Any) -> None:
     cols = st.columns(len(pages), gap="small")
     for col, page in zip(cols, pages):
         with col:
-            st.page_link(page, label=page.title, width="stretch")
+            key = "nav-active" if page.url_path == active.url_path else f"nav-{page.url_path}"
+            with st.container(key=key):
+                st.page_link(page, label=page.title, width="stretch")
     st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
 
 

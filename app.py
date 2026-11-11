@@ -23,6 +23,6 @@ pages = [
 current = st.navigation(pages, position="hidden")
 
 ui.render_header()
-ui.render_nav(pages)
+ui.render_nav(pages, current)
 
 current.run()
