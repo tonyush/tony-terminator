@@ -9,6 +9,7 @@ import streamlit as st
 
 from utils import math_models as mm
 from utils import state
+from utils.i18n import _
 
 NAV_ITEMS: list[dict[str, str]] = [
     {"path": "pages/1_life.py", "title": "人生終結者", "slug": "life", "default": "1"},
@@ -138,13 +139,29 @@ def render_header() -> None:
     )
 
 
+def _on_language_change() -> None:
+    st.session_state["language"] = "en" if st.session_state.get("lang_en") else "zh"
+
+
+def render_language_toggle() -> None:
+    """右上角 🌐 中文 / English 切換 (開 = English)。"""
+    if "lang_en" not in st.session_state:
+        st.session_state["lang_en"] = st.session_state.get("language") == "en"
+    st.toggle("🌐 中文 / English", key="lang_en", on_change=_on_language_change)
+
+
+def bank_sync_button(key: str) -> None:
+    """銀行真實數據同步的視覺佔位按鈕 (未來由 utils/bank_integration.py 串接)。"""
+    st.button(_("🏦 同步銀行真實數據 (Coming Soon)"), key=key, disabled=True, width="stretch")
+
+
 def render_nav(pages: Sequence[Any], active: Any) -> None:
     cols = st.columns(len(pages), gap="small")
     for col, page in zip(cols, pages):
         with col:
             key = "nav-active" if page.url_path == active.url_path else f"nav-{page.url_path}"
             with st.container(key=key):
-                st.page_link(page, label=page.title, width="stretch")
+                st.page_link(page, label=_(page.title), width="stretch")
     st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
 
 
@@ -176,18 +193,26 @@ def fmt_money(value: float) -> str:
     return f"NT$ {value:,.0f}"
 
 
+def field_label(key: str) -> str:
+    """由 math_models.MEDIAN_FIELDS 推導欄位標籤 (已翻譯)；百分比欄位自動加上 (%)。"""
+    name, unit = mm.MEDIAN_FIELDS[key]
+    label = _(name)
+    return f"{label} (%)" if unit == "%" else label
+
+
 def median_hint(field_key: str, note: str = "") -> None:
     """欄位下方較小、較淡的中位數說明文字 (數據來自 math_models)。"""
     name, unit = mm.MEDIAN_FIELDS[field_key]
     median = mm.get_median(field_key, state.get("occupation"))
     if median is None:
-        text = "待填入"
+        text = _("待填入")  # TODO: 中位數附註 — 數據請填在 math_models.MEDIAN_DEFAULT / MEDIAN_BY_OCCUPATION
     elif unit == "元":
-        text = f"{median:,.0f} 元"
+        text = f"{median:,.0f} {_('元')}"
     else:
-        text = f"{median:g} {unit}"
+        text = f"{median:g} {_(unit)}"
+    body = _("{name}中位數：{value}").format(name=_(name), value=text)
     prefix = f"{note}　|　" if note else ""
-    st.markdown(f'<div class="hint">{prefix}{name}中位數：{text}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="hint">{prefix}{body}</div>', unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------------------
@@ -195,26 +220,30 @@ def median_hint(field_key: str, note: str = "") -> None:
 # ---------------------------------------------------------------------------
 
 
-def num_input(label: str, key: str, *, hint: bool = True, note: str = "", **kwargs: Any) -> Any:
+def num_input(key: str, label: str | None = None, *, hint: bool = True, note: str = "", **kwargs: Any) -> Any:
     state.bind(key)
-    value = st.number_input(label, key=key, **kwargs)
+    value = st.number_input(label or field_label(key), key=key, **kwargs)
     state.commit(key)
     if hint and key in mm.MEDIAN_FIELDS:
         median_hint(key, note)
     return value
 
 
-def money_input(label: str, key: str, **kwargs: Any) -> Any:
-    return num_input(label, key, min_value=0, step=1000, format="%d", **kwargs)
+def money_input(key: str, label: str | None = None, **kwargs: Any) -> Any:
+    return num_input(key, label, min_value=0, step=1000, format="%d", **kwargs)
 
 
-def pct_input(label: str, key: str, **kwargs: Any) -> Any:
-    return num_input(label, key, min_value=0.0, max_value=100.0, step=0.1, format="%.1f", **kwargs)
+def int_input(key: str, label: str | None = None, **kwargs: Any) -> Any:
+    return num_input(key, label, min_value=0, max_value=99, step=1, format="%d", **kwargs)
 
 
-def slider(label: str, key: str, min_value: Any, max_value: Any, *, hint: bool = True, **kwargs: Any) -> Any:
+def pct_input(key: str, label: str | None = None, **kwargs: Any) -> Any:
+    return num_input(key, label, min_value=0.0, max_value=100.0, step=0.1, format="%.1f", **kwargs)
+
+
+def slider(key: str, min_value: Any, max_value: Any, label: str | None = None, *, hint: bool = True, **kwargs: Any) -> Any:
     state.bind(key)
-    value = st.slider(label, min_value, max_value, key=key, **kwargs)
+    value = st.slider(label or field_label(key), min_value, max_value, key=key, **kwargs)
     state.commit(key)
     if hint and key in mm.MEDIAN_FIELDS:
         median_hint(key)
@@ -230,6 +259,15 @@ def checkbox(label: str, key: str, **kwargs: Any) -> bool:
 
 def select(label: str, key: str, options: Sequence[Any], **kwargs: Any) -> Any:
     state.bind(key)
+    kwargs.setdefault("format_func", _)
     value = st.selectbox(label, options, key=key, **kwargs)
+    state.commit(key)
+    return value
+
+
+def radio(label: str, key: str, options: Sequence[Any], **kwargs: Any) -> Any:
+    state.bind(key)
+    kwargs.setdefault("format_func", _)
+    value = st.radio(label, options, key=key, **kwargs)
     state.commit(key)
     return value
