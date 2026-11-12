@@ -60,12 +60,12 @@ left, right = st.columns([1.15, 1], gap="large")
 with left:
     with ui.card("ledger-add", "gold"):
         ui.card_title(_("新增一筆"), _("顏色標籤可用來自訂分群，例如紅色代表必要支出"))
-        st.radio(_("類型"), KINDS, key="lg_kind", horizontal=True, format_func=_)
+        ui.radio(_("類型"), "lg_kind", KINDS, horizontal=True)
         c1, c2 = st.columns(2)
         with c1:
-            st.selectbox(_("顏色標籤"), list(ui.COLOR_TAGS), key="lg_color", format_func=_)
+            ui.select(_("顏色標籤"), "lg_color", list(ui.COLOR_TAGS))
         with c2:
-            st.selectbox(_("標籤類別"), CATEGORIES, key="lg_category", format_func=_)
+            ui.select(_("標籤類別"), "lg_category", CATEGORIES)
         c4, c5 = st.columns([2, 1])
         with c4:
             st.text_input(_("文字描述"), key="lg_desc", placeholder=_("例如：午餐、水電費"))

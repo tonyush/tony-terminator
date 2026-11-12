@@ -9,7 +9,7 @@ import streamlit as st
 
 from utils import math_models as mm
 from utils import state
-from utils.i18n import _
+from utils.i18n import _, current_language
 
 NAV_ITEMS: list[dict[str, str]] = [
     {"path": "pages/1_life.py", "title": "人生終結者", "slug": "life", "default": "1"},
@@ -257,17 +257,27 @@ def checkbox(label: str, key: str, **kwargs: Any) -> bool:
     return value
 
 
-def select(label: str, key: str, options: Sequence[Any], **kwargs: Any) -> Any:
-    state.bind(key)
+def choice_key(key: str) -> str:
+    """含語言後綴的 widget key。切換語言時 Streamlit 才會重繪 format_func 後的選項文字。"""
+    return f"{key}@{current_language()}"
+
+
+def _choice(widget: Any, label: str, key: str, options: Sequence[Any], kwargs: dict[str, Any]) -> Any:
     kwargs.setdefault("format_func", _)
-    value = st.selectbox(label, options, key=key, **kwargs)
-    state.commit(key)
+    widget_key = choice_key(key)
+    if widget_key not in st.session_state:
+        stored = state.get(key)
+        st.session_state[widget_key] = stored if stored in options else options[0]
+    value = widget(label, options, key=widget_key, **kwargs)
+    # 對外仍維持原本的 session_state[key] 與 user_profile[key]
+    st.session_state[key] = value
+    state._store()[key] = value
     return value
+
+
+def select(label: str, key: str, options: Sequence[Any], **kwargs: Any) -> Any:
+    return _choice(st.selectbox, label, key, options, kwargs)
 
 
 def radio(label: str, key: str, options: Sequence[Any], **kwargs: Any) -> Any:
-    state.bind(key)
-    kwargs.setdefault("format_func", _)
-    value = st.radio(label, options, key=key, **kwargs)
-    state.commit(key)
-    return value
+    return _choice(st.radio, label, key, options, kwargs)
