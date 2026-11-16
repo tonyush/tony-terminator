@@ -16,7 +16,7 @@
 
 ```bash
 pip install -r requirements.txt
-streamlit run app.py   # 預設 http://localhost:8765
+streamlit run app.py --server.port 8765   # http://localhost:8765
 ```
 
 ## 中英雙語
@@ -44,3 +44,12 @@ utils/ui.py           # CSS 主題、卡片、輸入元件
 搜尋 `TODO`：`utils/math_models.py` 內的中位數表 (`MEDIAN_DEFAULT` / `MEDIAN_BY_OCCUPATION`)、
 通膨率、未來收入推估 (`calculate_projected_income`)、折線圖序列、月利息轉換、日息、所需工作年數、Duration / Convexity、債券組合與報酬率上限規則。
 UI 層不含任何公式，替換函式內容即可，介面會自動更新。
+
+## 部署到公開網址 (Streamlit Community Cloud)
+
+1. 把此專案推到你自己的 GitHub 儲存庫 (公開或私人皆可)。
+2. 到 https://share.streamlit.io 以 GitHub 登入，點 **Create app**，選 **Deploy a public app from GitHub**。
+3. 填入 Repository、Branch，**Main file path** 填 `app.py`；Advanced settings 的 Python 版本選 3.12 (或 3.11 以上)。
+4. 按 Deploy。完成後會得到 `https://<你的名稱>.streamlit.app` 公開網址；在 App settings → Sharing 可改為僅限邀請的人。
+
+專案沒有任何需要設定的 secrets，`requirements.txt` 會自動安裝。

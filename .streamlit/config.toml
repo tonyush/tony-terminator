@@ -1,5 +1,4 @@
 [server]
-port = 8765
 headless = true
 
 [browser]
